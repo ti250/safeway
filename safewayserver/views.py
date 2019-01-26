@@ -14,7 +14,7 @@ def get_route(request):
         journey_params = JourneyParameters.from_json(request.body)
         # Call some code to calculate the correct journey
         print(journey_params)
-        response = HttpResponse('journeysuccessfulyfound')
+        response = HttpResponse('journeysuccessfulyfound' + str(journey_params))
         response.status_code = 201
     except:
         response = HttpResponse('Invalid JSON')
