@@ -2,3 +2,4 @@ appdirs>=1.4.0
 numpy
 gunicorn
 django-heroku
+pytz
