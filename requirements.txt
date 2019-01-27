@@ -3,3 +3,4 @@ numpy
 gunicorn
 django-heroku
 pytz
+pandas

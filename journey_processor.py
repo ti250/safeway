@@ -11,29 +11,29 @@ class Route:
     def __init__(self, steps, distance):
         self.steps = steps
         self.distance = distance / 1000
-    
+
     @property
     def get_steps(self):
         return self.steps
 
-    
+
 class Step:
     def __init__(self, start, end, distance):
         self.start = start
         self.end = end
-    
+
     def __repr__(self):
         return 'Step(\'start\' - lat: {}, long: {} -> \'end\' - lat: {}, long: {})'.format(self.start[0], self.start[1], self.end[0], self.end[1])
-    
+
     @property
     def distance(self):
         return np.sqrt((self.end[1] - self.start[1])**2 + (self.end[0] - self.start[0])**2)
-    
+
 
 def get_journey_routes(journey):
     routes = journey['routes']
     journey_routes = []
-    
+
     for route in routes:
         legs = route['legs'][0]
         distance = legs['distance']['value']
@@ -46,7 +46,7 @@ def get_journey_routes(journey):
             journey_steps.append(Step(start, end, step_distance))
         new_route = Route(journey_steps, distance)
         journey_routes.append(new_route)
-    
+
     return journey_routes
 
 
@@ -73,9 +73,9 @@ def compute_step_risk(step, cd_matrix):
 #     print(crime_density_indices)
     crime_density_values = [cd_matrix[x] for x in crime_density_indices]
     interped_distances = interpolated_distances(interped_points)
-    
+
     return line_integral(crime_density_values, interped_distances, step.distance)
-    
+
 
 def compute_route_risk(route, cd_matrix):
     """
@@ -90,7 +90,7 @@ def compute_route_risk(route, cd_matrix):
         crime_density_indices.append(coords_to_crime_density(lat, long))
     crime_density_values = [cd_matrix[x] for x in crime_density_indices]
     interped_distances = interpolated_distances(interped_points)
-    
+
     return line_integral(crime_density_values, interped_distances, route.distance)
 
 
@@ -99,9 +99,9 @@ def compute_safest_steps(origin, destination, cd_matrix):
     end_location = initial_journey['routes'][0]['legs'][0]['steps'][-1]['end_location']
     end_location = (end_location['lat'], end_location['lng'])
     initial_routes = get_journey_routes(initial_journey)
-    
+
     final_steps = []
-    
+
     best_route = None
     lowest_risk = np.inf
     for route in initial_routes:
@@ -111,14 +111,14 @@ def compute_safest_steps(origin, destination, cd_matrix):
             best_route = route
             lowest_risk = step_risk
     final_steps.append(best_route.get_steps[0])
-    
+
     current_location = None
 
     while current_location != end_location:
         new_origin = final_steps[-1].end
         journey = caller.coordinate_journey_request(new_origin, end_location)
         routes = get_journey_routes(journey)
-     
+
         best_route = None
         lowest_risk = np.inf
         for route in routes:
@@ -130,6 +130,7 @@ def compute_safest_steps(origin, destination, cd_matrix):
         if best_route:
             final_steps.append(best_route.get_steps[0])
             current_location = best_route.get_steps[0].end
+    print(final_steps)
     return final_steps
 
 
@@ -153,7 +154,7 @@ def get_waypoints(safest_steps):
 def compute_safest_route(origin, destination, cd_matrix):
     safest_steps = compute_safest_steps(origin, destination, cd_matrix)
     way_points = get_waypoints(safest_steps)
-    
+
     waypoint_response = caller.waypoint_journey_request(origin, destination, way_points)
     routes = get_journey_routes(waypoint_response)
     risks = []
